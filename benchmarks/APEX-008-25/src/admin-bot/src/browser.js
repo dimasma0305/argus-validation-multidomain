@@ -3,11 +3,21 @@
  */
 
 const puppeteer = require('puppeteer');
+const dns = require('dns').promises;
 
 async function visitUrl(targetUrl, options) {
   const { oauthProviderUrl, username, password } = options;
 
   console.log(`[BROWSER] Starting browser...`);
+
+  // Chromium treats *.localhost as its own loopback even inside a container.
+  // Resolve the case's public names through Docker DNS and map only those names
+  // to their container IPs. The browser still sees the real distinct origins.
+  const publicHosts = (process.env.BROWSER_DNS_NAMES || '').split(',').map(x => x.trim()).filter(Boolean);
+  const hostRules = await Promise.all(publicHosts.map(async hostname => {
+    const { address } = await dns.lookup(hostname);
+    return `MAP ${hostname} ${address}`;
+  }));
 
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -15,7 +25,8 @@ async function visitUrl(targetUrl, options) {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-gpu'
+      '--disable-gpu',
+      ...(hostRules.length ? [`--host-resolver-rules=${hostRules.join(',')}`] : [])
     ]
   });
 

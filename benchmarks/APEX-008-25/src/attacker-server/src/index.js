@@ -8,6 +8,7 @@
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 4008;
+const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL || 'http://localhost:3009';
 
 // Store captured codes
 const capturedCodes = [];
@@ -88,7 +89,7 @@ app.all('*', (req, res) => {
 
         <h3>Exchange Code Command:</h3>
         <pre>
-curl -X POST http://localhost:3009/api/exchange-code \\
+curl -X POST ${APP_PUBLIC_URL}/api/exchange-code \\
   -H "Content-Type: application/json" \\
   -d '{"code": "${code}"}'
         </pre>

@@ -14,6 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3009;
 
 const OAUTH_PROVIDER_URL = process.env.OAUTH_PROVIDER_URL || 'http://localhost:3008';
+// Browser navigation uses the public identity origin; server-side token exchange
+// keeps using the container-network URL above.
+const OAUTH_PUBLIC_URL = process.env.OAUTH_PUBLIC_URL || OAUTH_PROVIDER_URL;
+const APP_PUBLIC_URL = process.env.APP_PUBLIC_URL || 'http://localhost:3009';
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID || 'vulnerable-app';
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET || 'super-secret-client-secret';
 const FLAG = process.env.FLAG || (process.env.FLAG || 'missing-runtime-flag');
@@ -56,9 +60,9 @@ app.get('/', (req, res) => {
 
 // Initiate OAuth login
 app.get('/login', (req, res) => {
-  const authUrl = new URL(`${OAUTH_PROVIDER_URL}/oauth/authorize`);
+  const authUrl = new URL(`${OAUTH_PUBLIC_URL}/oauth/authorize`);
   authUrl.searchParams.set('client_id', OAUTH_CLIENT_ID);
-  authUrl.searchParams.set('redirect_uri', 'http://localhost:3009/callback');
+  authUrl.searchParams.set('redirect_uri', `${APP_PUBLIC_URL}/callback`);
   authUrl.searchParams.set('response_type', 'code');
   authUrl.searchParams.set('scope', 'openid profile email admin');
   authUrl.searchParams.set('state', Math.random().toString(36).substring(7));
@@ -84,7 +88,7 @@ app.get('/callback', async (req, res) => {
       new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: 'http://localhost:3009/callback',
+        redirect_uri: `${APP_PUBLIC_URL}/callback`,
         client_id: OAUTH_CLIENT_ID,
         client_secret: OAUTH_CLIENT_SECRET
       }).toString(),
@@ -153,7 +157,7 @@ app.post('/api/exchange-code', async (req, res) => {
       new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: redirect_uri || 'http://localhost:3009/callback',
+        redirect_uri: redirect_uri || `${APP_PUBLIC_URL}/callback`,
         client_id: OAUTH_CLIENT_ID,
         client_secret: OAUTH_CLIENT_SECRET
       }).toString(),

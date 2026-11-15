@@ -51,13 +51,7 @@ app.get('/', (req, res) => {
       <p>POST <code>/bot/visit</code> with JSON body:</p>
       <pre>{ "url": "https://..." }</pre>
 
-      <h3>Example Attack</h3>
-      <p>Submit a malicious OAuth authorization URL:</p>
-      <pre>http://oauth-provider:3008/oauth/authorize?
-  client_id=vulnerable-app&
-  redirect_uri=https://app.vulnerable.local.attacker.com/steal&
-  response_type=code&
-  scope=admin</pre>
+      <p>Submit an authorization URL from the linked identity provider.</p>
     </body>
     </html>
   `);

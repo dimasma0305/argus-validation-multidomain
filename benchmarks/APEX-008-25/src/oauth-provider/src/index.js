@@ -59,7 +59,7 @@ app.get('/login', (req, res) => {
         <input type="password" name="password" placeholder="Password" required>
         <button type="submit">Sign In</button>
       </form>
-      <p>Demo accounts: user/user123 or admin/SuperSecretAdminPass123!</p>
+      <p>Demo account: user/user123</p>
     </body>
     </html>
   `);

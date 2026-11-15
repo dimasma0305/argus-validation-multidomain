@@ -21,6 +21,8 @@ node_modules/
 # Temp files
 *.tmp
 *.log
+.benchmark-*-flag
+.local-runs/
 
 # Implementation plans (kept locally, not tracked)
 docs/
