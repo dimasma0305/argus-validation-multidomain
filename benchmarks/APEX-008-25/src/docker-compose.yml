@@ -4,7 +4,7 @@ services:
       context: ./oauth-provider
     container_name: apex-008-25-oauth-provider
     ports:
-      - "3008:3008"
+      - "${OAUTH_HOST_PORT:-3008}:3008"
     environment:
       - NODE_ENV=production
       - PORT=3008
@@ -29,7 +29,7 @@ services:
       context: ./app
     container_name: apex-008-25-app
     ports:
-      - "3009:3009"
+      - "${APP_HOST_PORT:-3009}:3009"
     environment:
       - NODE_ENV=production
       - PORT=3009
@@ -58,7 +58,7 @@ services:
       context: ./admin-bot
     container_name: apex-008-25-admin-bot
     ports:
-      - "3010:3010"
+      - "${REVIEW_HOST_PORT:-3010}:3010"
     environment:
       - NODE_ENV=production
       - PORT=3010
@@ -85,7 +85,7 @@ services:
       context: ./attacker-server
     container_name: apex-008-25-attacker-server
     ports:
-      - "4008:4008"
+      - "${COLLECTOR_HOST_PORT:-4008}:4008"
     environment:
       - PORT=4008
       - APP_PUBLIC_URL=http://app.apex008.localhost:3009
