@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dimasma0305/argus-validation-multidomain/schemas/scope-catalog-v1.schema.json",
+  "title": "Argus stable domain scope catalog",
+  "type": "object",
+  "required": ["schema_version", "domain_suffix", "policy", "cases"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "domain_suffix": { "const": "argus.localhost" },
+    "policy": { "type": "object" },
+    "cases": {
+      "type": "array",
+      "minItems": 71,
+      "items": {
+        "type": "object",
+        "required": ["id", "root_host", "root_url", "wildcard", "primary_service", "assets", "relationships"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^(APEX|ARGUS)-[0-9]{3}-[0-9]{2}$" },
+          "root_host": { "type": "string", "pattern": "^[a-z0-9-]+\\.argus\\.localhost$" },
+          "root_url": { "type": "string", "minLength": 1 },
+          "wildcard": { "type": "string", "pattern": "^\\*\\.[a-z0-9-]+\\.argus\\.localhost$" },
+          "primary_service": { "type": "string", "minLength": 1 },
+          "assets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["service", "host", "primary", "endpoints"],
+              "properties": {
+                "service": { "type": "string", "minLength": 1 },
+                "host": { "type": "string", "minLength": 1 },
+                "aliases": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+                "primary": { "type": "boolean" },
+                "endpoints": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["target_port", "transport", "protocol", "benchmark_port", "url"],
+                    "properties": {
+                      "target_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                      "benchmark_port": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+                      "transport": { "enum": ["tcp", "udp"] },
+                      "protocol": { "type": "string", "minLength": 1 },
+                      "url": { "type": "string", "minLength": 1 }
+                    },
+                    "additionalProperties": true
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "relationships": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "from", "to", "kind", "signals"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "from": { "type": "string", "minLength": 1 },
+                "to": { "type": "string", "minLength": 1 },
+                "kind": { "const": "service_relation" },
+                "signals": { "type": "array", "items": { "enum": ["depends_on", "references"] } }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
