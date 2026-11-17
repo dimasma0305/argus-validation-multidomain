@@ -22,6 +22,12 @@ def claimed_assets(run: Path) -> list[tuple[str, str]]:
             claims.append(("exploration:" + str(node.get("id", "")), json_text(node)))
     assets = load_json(run / "assets.json", {})
     for asset in assets.get("assets", []) if isinstance(assets, dict) else []:
+        # ARTEX creates root-domain parents automatically when a concrete host
+        # is retained. They are graph structure, not an agent claim about an
+        # independently reachable benchmark asset, so they must not reduce
+        # candidate precision.
+        if asset.get("type") == "root_domain" and asset.get("task_source") == "system":
+            continue
         claims.append(("asset:" + str(asset.get("id", "")), json_text(asset)))
     return list(dict.fromkeys(claims))
 
