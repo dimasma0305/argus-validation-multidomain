@@ -298,6 +298,8 @@ def asset_assessment(case: dict[str, Any]) -> dict[str, Any]:
     origins = []
     for asset in case["assets"]:
         aliases = {asset["service"], asset["host"], *asset.get("aliases", [])}
+        if asset["primary"]:
+            aliases.add(case["root_host"])
         for endpoint in asset["endpoints"]:
             aliases.update({endpoint["url"], f"{case['root_host']}:{endpoint['benchmark_port']}"})
             origins.append({
