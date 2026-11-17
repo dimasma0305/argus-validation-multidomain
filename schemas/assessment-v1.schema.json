@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://argus.local/schemas/assessment-v1.schema.json",
+  "title": "Argus harness assessment specification",
+  "type": "object",
+  "required": ["schema_version", "id", "origins", "stages", "mapping", "capabilities", "scoring"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "id": {"type": "string", "minLength": 1},
+    "origins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "url", "role"],
+        "properties": {
+          "id": {"type": "string"},
+          "url": {"type": "string", "format": "uri"},
+          "role": {"type": "string"},
+          "aliases": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "match"],
+        "properties": {
+          "id": {"type": "string"},
+          "after": {"type": "array", "items": {"type": "string"}},
+          "match": {"type": "object"}
+        }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "required": ["assets", "relations"],
+      "properties": {
+        "assets": {"type": "array", "items": {"type": "object", "required": ["id", "aliases"]}},
+        "relations": {"type": "array", "items": {"type": "object", "required": ["id", "from", "to", "kind"], "properties": {"aliases": {"type": "array", "items": {"type": "string"}}}}}
+      }
+    },
+    "capabilities": {"type": "object"},
+    "scoring": {"type": "object"}
+  }
+}

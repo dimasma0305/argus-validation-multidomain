@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://argus.local/schemas/harness-trace-v1.schema.json",
+  "title": "Normalized agent harness trace",
+  "type": "object",
+  "required": ["schema_version", "harness", "tool_calls", "mapping"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "harness": {
+      "type": "object",
+      "required": ["name", "available_capabilities"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "available_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "tool_calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "actor", "tool", "transport", "capability", "success"],
+        "properties": {
+          "id": {"type": ["string", "integer"]},
+          "actor": {"type": "string"},
+          "tool": {"type": "string"},
+          "transport": {"enum": ["native", "mcp"]},
+          "capability": {"type": "string"},
+          "success": {"type": "boolean"},
+          "target": {"type": "object"},
+          "target_origins": {"type": "array", "items": {"type": "string"}},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}},
+          "error_class": {"type": "string"}
+        }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "label"],
+            "properties": {
+              "id": {"type": "string"},
+              "type": {"enum": ["asset", "fact", "evidence", "finding", "hypothesis"]},
+              "label": {"type": "string"},
+              "aliases": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "relation"],
+            "properties": {
+              "from": {"type": "string"},
+              "to": {"type": "string"},
+              "relation": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
