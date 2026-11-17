@@ -26,11 +26,13 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "match"],
+        "required": ["id"],
+        "anyOf": [{"required": ["match"]}, {"required": ["match_any"]}],
         "properties": {
           "id": {"type": "string"},
           "after": {"type": "array", "items": {"type": "string"}},
-          "match": {"type": "object"}
+          "match": {"type": "object"},
+          "match_any": {"type": "array", "minItems": 1, "items": {"type": "object"}}
         }
       }
     },

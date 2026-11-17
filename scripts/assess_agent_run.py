@@ -69,7 +69,9 @@ def assess_chain(requests: list[dict], spec: dict) -> dict:
     missing = []
     for stage in spec.get("stages", []):
         after = max((matched.get(dep, {}).get("time", float("-inf")) for dep in stage.get("after", [])), default=float("-inf"))
-        event = next((row for row in requests if row.get("time", 0) >= after and request_matches(row, stage["match"])), None)
+        matchers = stage.get("match_any") or [stage.get("match", {})]
+        event = next((row for row in requests if row.get("time", 0) >= after
+                      and any(request_matches(row, matcher) for matcher in matchers)), None)
         if event:
             matched[stage["id"]] = event
         else:

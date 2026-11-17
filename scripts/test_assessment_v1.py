@@ -29,6 +29,7 @@ class AssessmentTests(unittest.TestCase):
         for index, (origin, method, path, status, flag) in enumerate(requests, 1):
             row = {"seq": index, "time": float(index), "origin": origin, "method": method,
                    "path": path, "status": status, "flag_in_response": flag,
+                   "query_keys": ["code"] if (origin == "collector" or path == "/callback") else [],
                    "request_fingerprint": f"request-{index}", "response_hash": f"response-{index}"}
             by_origin.setdefault(origin, []).append(row)
         if duplicate:
