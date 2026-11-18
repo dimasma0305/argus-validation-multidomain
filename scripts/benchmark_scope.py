@@ -513,7 +513,7 @@ def command_up(args: argparse.Namespace) -> None:
 
 def command_down(args: argparse.Namespace) -> None:
     controller = read_controller(args.state.resolve())
-    run_checked(controller_command(controller, "down", "--remove-orphans"), controller_env(controller))
+    run_checked(controller_command(controller, "down", "--remove-orphans", "--volumes"), controller_env(controller))
 
 
 def command_status(args: argparse.Namespace) -> None:
@@ -544,7 +544,7 @@ def command_suite_up(args: argparse.Namespace) -> None:
     except subprocess.CalledProcessError:
         for child in reversed(started):
             subprocess.run(
-                controller_command(child, "down", "--remove-orphans"),
+                controller_command(child, "down", "--remove-orphans", "--volumes"),
                 env=controller_env(child),
                 check=False,
             )
@@ -558,7 +558,7 @@ def command_suite_down(args: argparse.Namespace) -> None:
     for item in reversed(controller["cases"]):
         child = read_controller(Path(item["state"]))
         result = subprocess.run(
-            controller_command(child, "down", "--remove-orphans"),
+            controller_command(child, "down", "--remove-orphans", "--volumes"),
             env=controller_env(child),
             check=False,
         )
