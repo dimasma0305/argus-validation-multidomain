@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import argparse
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from jsonschema import Draft202012Validator
 
@@ -22,6 +24,24 @@ class ScopeCatalogTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.catalog = scope.build_catalog()
+
+    def test_start_always_rebuilds_randomized_target_image(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory)
+            flag_file = state / "proof.txt"
+            flag_file.write_text("test-proof", encoding="ascii")
+            scope_file = state / "scope.json"
+            scope_file.write_text("{}", encoding="utf-8")
+            scope.write_json(state / "controller.json", {
+                "project": "benchmark-test",
+                "compose": str(state / "compose.yml"),
+                "override": str(state / "override.yml"),
+                "flag_file": str(flag_file),
+                "scope": str(scope_file),
+            })
+            with patch.object(scope, "run_checked") as run:
+                scope.command_up(argparse.Namespace(state=state))
+            self.assertIn("--build", run.call_args.args[0])
 
     def test_all_cases_have_stable_unique_domains_and_ports(self):
         self.assertEqual(len(self.catalog["cases"]), 71)
