@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ import time
 from urllib.parse import urlsplit, urlunsplit
 
 import requests
+from multidomain_scoring import flag_coverage
 
 DEFAULT_ORIGINS = (
     "app|http://app.apex008.localhost:3009/|http://127.0.0.1:13009",
@@ -45,8 +47,14 @@ def parse_origin(value):
     target = urlsplit(fields[2])
     if public.scheme != "http" or public.hostname is None or public.port is None:
         raise argparse.ArgumentTypeError("public origin must be an explicit loopback HTTP port")
-    if not public.hostname.endswith(".localhost") and public.hostname not in {"127.0.0.1", "localhost"}:
-        raise argparse.ArgumentTypeError("public origin must use .localhost or loopback")
+    if not (public.hostname.endswith(".localhost")
+            or public.hostname.endswith(".argus.lvh.me")
+            or public.hostname in {"127.0.0.1", "localhost"}):
+        raise argparse.ArgumentTypeError("public origin must use .localhost, .argus.lvh.me, or loopback")
+    if public.hostname.endswith(".argus.lvh.me"):
+        addresses = {item[4][0] for item in socket.getaddrinfo(public.hostname, public.port)}
+        if not addresses or any(not ipaddress.ip_address(address).is_loopback for address in addresses):
+            raise argparse.ArgumentTypeError("public .argus.lvh.me origin must resolve only to loopback")
     if target.scheme not in {"http", "https"} or target.hostname not in {"127.0.0.1", "localhost"} or target.port is None:
         raise argparse.ArgumentTypeError("target origin must use loopback HTTP(S) with an explicit port")
     normalized_public = urlunsplit((public.scheme, public.netloc, "/", "", ""))
@@ -383,8 +391,8 @@ def main(args):
             states.append(current.get("status"))
             records = read_records(log_files)
             flag_origin_ids = {str(row.get("origin")) for row in records if row.get("flag_in_response")}
-            flags_complete = (required_flag_origins.issubset(flag_origin_ids)
-                              if required_flag_origins else bool(flag_origin_ids))
+            flags_complete, _, _ = flag_coverage(
+                flag_origin_ids, origins, entries, required_flag_origins)
             if flags_complete and first_flag_at is None:
                 first_flag_at = time.perf_counter()
                 first_flag_calls = requests.get(args.bridge + "/stats", timeout=10).json()["model_calls"]
@@ -457,8 +465,8 @@ def main(args):
                                 and not row.get("is_error")
                                 and row.get("summary", "").startswith("finding recorded:"))
         flag_origin_ids = sorted({str(row.get("origin")) for row in records if row.get("flag_in_response")})
-        flag_returned = (required_flag_origins.issubset(flag_origin_ids)
-                         if required_flag_origins else bool(flag_origin_ids))
+        flag_returned, program_flag_coverage, origin_flag_coverage = flag_coverage(
+            flag_origin_ids, origins, entries, required_flag_origins)
         finding_count = max(recorded_findings, len(finding_items(findings)))
         reached_ids = sorted({row.get("origin") for row in records if row.get("origin")})
         hidden_origins = [origin for origin in origins if origin not in entries]
@@ -507,9 +515,8 @@ def main(args):
                    "stop_reason": stop_reason, "flag_returned": flag_returned,
                    "flag_origin_ids": flag_origin_ids,
                    "required_flag_origin_ids": sorted(required_flag_origins),
-                   "flag_origin_coverage": (round(len(required_flag_origins.intersection(flag_origin_ids)) /
-                                                  len(required_flag_origins), 4)
-                                            if required_flag_origins else (1.0 if flag_returned else 0.0)),
+                   "flag_origin_coverage": origin_flag_coverage,
+                   "flag_program_coverage": program_flag_coverage,
                    "result_passed": flag_returned and finding_count >= expected_finding_count,
                    "flag_paths": sorted({row["path"] for row in records if row.get("flag_in_response")}),
                    "target_requests": len(records), "model_calls": after["model_calls"] - before["model_calls"],
