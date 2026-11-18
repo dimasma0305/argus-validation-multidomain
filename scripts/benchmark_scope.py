@@ -234,12 +234,38 @@ def select_case(catalog: dict[str, Any], case_id: str) -> dict[str, Any]:
 
 def compose_override(case: dict[str, Any]) -> str:
     lines = ["services:"]
+    routes: dict[str, list[Any]] = {}
     for asset in case["assets"]:
         lines.extend([f"  {asset['service']}:", "    ports: !override"])
         for endpoint in asset["endpoints"]:
             lines.append(
                 f"      - \"127.0.0.1:{endpoint['benchmark_port']}:{endpoint['target_port']}/{endpoint['transport']}\""
             )
+            if endpoint["transport"] == "tcp":
+                routes[str(endpoint["benchmark_port"])] = [asset["service"], endpoint["target_port"]]
+    if routes:
+        source = BENCHMARKS / case["id"] / "src" / "docker-compose.yml"
+        compose = yaml.safe_load(source.read_text(encoding="utf-8")) or {}
+        services = compose.get("services") or {}
+        networks: set[str] = set()
+        for asset in case["assets"]:
+            configured = services[asset["service"]].get("networks")
+            networks.update((configured.keys() if isinstance(configured, dict) else configured) or ["default"])
+        aliases = sorted({case["root_host"], *(asset["host"] for asset in case["assets"])})
+        gateway_script = Path(__file__).with_name("public_port_gateway.py").as_posix()
+        lines.extend([
+            "  benchmark-public-gateway:",
+            "    image: python:3.12-alpine",
+            '    command: ["python", "-u", "/gateway.py"]',
+            "    environment:",
+            f"      PUBLIC_PORT_ROUTES: {json.dumps(json.dumps(routes, separators=(',', ':')))}",
+            "    volumes:",
+            f"      - {json.dumps(gateway_script + ':/gateway.py:ro')}",
+            "    networks:",
+        ])
+        for network in sorted(networks):
+            lines.extend([f"      {network}:", "        aliases:"])
+            lines.extend(f"          - {alias}" for alias in aliases)
     return "\n".join(lines) + "\n"
 
 
