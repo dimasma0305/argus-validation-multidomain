@@ -39,9 +39,32 @@ class ScopeCatalogTests(unittest.TestCase):
                 "flag_file": str(flag_file),
                 "scope": str(scope_file),
             })
-            with patch.object(scope, "run_checked") as run:
+            with patch.object(scope, "run_checked") as run, patch.object(scope, "wait_for_scope_root"):
                 scope.command_up(argparse.Namespace(state=state))
             self.assertIn("--build", run.call_args.args[0])
+
+    def test_normalize_case_shell_scripts_only_changes_line_endings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "docker-compose.yml").write_text("services: {}\n", encoding="utf-8")
+            script = root / "entrypoint.sh"
+            script.write_bytes(b"#!/bin/sh\r\nprintf 'ready'\r\n")
+            other = root / "app.py"
+            other.write_bytes(b"x = 1\r\n")
+            controller = {"compose": str(root / "docker-compose.yml")}
+            self.assertEqual(scope.normalize_case_shell_scripts(controller), 1)
+            self.assertEqual(script.read_bytes(), b"#!/bin/sh\nprintf 'ready'\n")
+            self.assertEqual(other.read_bytes(), b"x = 1\r\n")
+            self.assertEqual(scope.normalize_case_shell_scripts(controller), 0)
+
+    def test_unreachable_root_rejects_broken_case_before_agent_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "scope.json"
+            path.write_text('{"root_url":"http://example.invalid:22380/"}', encoding="utf-8")
+            controller = {"case_id": "ARGUS-TEST", "scope": str(path)}
+            with patch.object(scope.socket, "create_connection", side_effect=OSError("refused")):
+                with self.assertRaisesRegex(RuntimeError, "ARGUS-TEST root is unreachable"):
+                    scope.wait_for_scope_root(controller, timeout=0)
 
     def test_all_cases_have_stable_unique_domains_and_ports(self):
         self.assertEqual(len(self.catalog["cases"]), 71)
