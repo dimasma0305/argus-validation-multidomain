@@ -6,7 +6,7 @@
   "required": ["schema_version", "domain_suffix", "policy", "cases"],
   "properties": {
     "schema_version": { "const": "1.0" },
-    "domain_suffix": { "const": "argus.localhost" },
+    "domain_suffix": { "const": "argus.lvh.me" },
     "policy": { "type": "object" },
     "cases": {
       "type": "array",
@@ -16,9 +16,9 @@
         "required": ["id", "root_host", "root_url", "wildcard", "primary_service", "assets", "relationships"],
         "properties": {
           "id": { "type": "string", "pattern": "^(APEX|ARGUS)-[0-9]{3}-[0-9]{2}$" },
-          "root_host": { "type": "string", "pattern": "^[a-z0-9-]+\\.argus\\.localhost$" },
+          "root_host": { "type": "string", "pattern": "^[a-z0-9-]+\\.argus\\.lvh\\.me$" },
           "root_url": { "type": "string", "minLength": 1 },
-          "wildcard": { "type": "string", "pattern": "^\\*\\.[a-z0-9-]+\\.argus\\.localhost$" },
+          "wildcard": { "type": "string", "pattern": "^\\*\\.[a-z0-9-]+\\.argus\\.lvh\\.me$" },
           "primary_service": { "type": "string", "minLength": 1 },
           "assets": {
             "type": "array",

@@ -18,7 +18,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 BENCHMARKS = ROOT / "benchmarks"
-DOMAIN_SUFFIX = "argus.localhost"
+DOMAIN_SUFFIX = "argus.lvh.me"
 SCHEMA_VERSION = "1.0"
 PORT_BASE = 21000
 PORT_STRIDE = 20
